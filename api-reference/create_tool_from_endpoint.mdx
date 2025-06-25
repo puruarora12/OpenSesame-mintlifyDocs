@@ -1,0 +1,432 @@
+---
+title: "Create tool from endpoint"
+openapi: 'POST /create_tool_from_endpoint'
+---
+
+
+
+## Overview
+
+The `/create_tool_from_endpoint` endpoint automatically generates API tools from web interactions. It analyzes API endpoints, request patterns, and webpage context to create intelligent OpenAPI specifications that can be used by AI agents.
+
+## Endpoint
+
+<CodeGroup>
+```bash POST /create_tool_from_endpoint
+curl -X POST "https://your-api-domain.com/create_tool_from_endpoint" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://api.example.com/users",
+    "method": "POST",
+    "account_id": "acct_123",
+    "cell_id": "cell_456",
+    "request_body": "name=John&email=john@example.com"
+  }'
+```
+</CodeGroup>
+
+## Request Format
+
+The endpoint accepts `application/json` with endpoint analysis data:
+
+### Request Schema
+
+```json
+{
+  "url": "string",                      // API endpoint URL
+  "method": "string",                   // HTTP method (GET, POST, PUT, DELETE, etc.)
+  "account_id": "string",               // Account identifier
+  "cell_id": "string",                  // Organization cell identifier
+  "trigger": {                          // Optional: UI trigger information
+    "type": "string",                   // Trigger type (mouse, keyboard, etc.)
+    "target": "string"                  // CSS selector or element description
+  },
+  "request_body": "string",             // Optional: Request payload data
+  "viewport_data": {},                  // Optional: Current page context
+  "description": "string",              // Optional: Manual description
+  "manual_upload": false                // Whether this is a manual upload vs auto-detected
+}
+```
+
+## Required Parameters
+
+<ParamField query="url" type="string" required>
+  The full URL of the API endpoint to analyze and create a tool for.
+</ParamField>
+
+<ParamField query="method" type="string" required>
+  HTTP method used by the endpoint. Common values:
+  - `GET` - Retrieve data
+  - `POST` - Create new resources
+  - `PUT` - Update existing resources
+  - `DELETE` - Remove resources
+  - `PATCH` - Partial updates
+</ParamField>
+
+<ParamField query="account_id" type="string" required>
+  Account identifier for tool ownership and access control.
+</ParamField>
+
+<ParamField query="cell_id" type="string" required>
+  Organization cell identifier for tool registration and context.
+</ParamField>
+
+## Optional Parameters
+
+<ParamField query="trigger" type="object" default="null">
+  Information about the UI element that triggered the API call:
+  ```json
+  {
+    "type": "mouse",
+    "target": "button#submit.primary[aria-label=\"Submit Form\"]"
+  }
+  ```
+</ParamField>
+
+<ParamField query="request_body" type="string" default="null">
+  The request payload data, typically URL-encoded or JSON string. Used to infer parameter schemas.
+</ParamField>
+
+<ParamField query="viewport_data" type="object" default="null">
+  Current webpage context including visible content and form fields. Helps generate more accurate tool descriptions.
+</ParamField>
+
+<ParamField query="description" type="string" default="null">
+  Manual description of the endpoint functionality. If provided, will be enhanced with auto-generated insights.
+</ParamField>
+
+<ParamField query="manual_upload" type="boolean" default="false">
+  Whether this endpoint was manually uploaded vs automatically detected from web interactions.
+</ParamField>
+
+## Response Format
+
+```json
+{
+  "status": "string",                   // Success, Partial Success, or Failed
+  "description": {},                    // Generated OpenAPI specification
+  "toolName": "string",                 // Generated tool name
+  "endpoint_description": "string",     // Human-readable endpoint description
+  "account_id": "string",               // Account identifier
+  "spec_ids": ["string"],               // Created tool specification IDs
+  "tools_added": true,                  // Whether tools were successfully added
+  "was_enhanced": false,                // Whether existing tool was enhanced
+  "previous_description": "string",     // Previous tool description if enhanced
+  "error": "string",                    // Error message if any
+  "analyzed_endpoint": {                // Summary of analyzed endpoint
+    "url": "string",
+    "method": "string", 
+    "trigger_type": "string"
+  }
+}
+```
+
+## Generated OpenAPI Specification
+
+The endpoint generates a complete OpenAPI 3.0 specification:
+
+```json
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "User Management API",
+    "version": "1.0.0",
+    "description": "API for managing user accounts and profiles"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "post": {
+        "operationId": "createUser",
+        "summary": "Create a new user account",
+        "description": "Creates a new user account with email and profile information. Use this when registering new users or importing user data from external sources.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "User's email address",
+                    "example": "john@example.com"
+                  },
+                  "name": {
+                    "type": "string", 
+                    "description": "User's full name",
+                    "example": "John Doe"
+                  }
+                },
+                "required": ["email", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user_id": {
+                      "type": "string",
+                      "example": "user_123456"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "created"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Tool Enhancement
+
+The system can enhance existing tools by:
+
+### Detection Methods
+
+1. **URL Matching** - Finds tools with matching endpoint URLs
+2. **Name Pattern Matching** - Identifies tools with similar operation names
+3. **Metadata Analysis** - Checks stored tool metadata for matches
+4. **Operation ID Matching** - Compares generated operation IDs
+
+### Enhancement Process
+
+When an existing tool is found:
+- **Preserves** valuable existing descriptions
+- **Adds** new parameter insights from request analysis
+- **Enhances** documentation with context from viewport data
+- **Updates** request/response schemas based on new data
+
+## Usage Examples
+
+### Basic Endpoint Analysis
+
+<CodeGroup>
+```javascript JavaScript
+const response = await fetch('/create_tool_from_endpoint', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    url: 'https://api.example.com/orders',
+    method: 'POST',
+    account_id: 'acct_123',
+    cell_id: 'cell_456',
+    request_body: 'product_id=123&quantity=2&customer_email=user@example.com'
+  })
+});
+
+const result = await response.json();
+console.log('Generated tool:', result.toolName);
+console.log('OpenAPI spec:', result.description);
+```
+
+```python Python
+import requests
+import json
+
+payload = {
+    "url": "https://api.example.com/customers",
+    "method": "GET", 
+    "account_id": "acct_123",
+    "cell_id": "cell_456",
+    "trigger": {
+        "type": "mouse",
+        "target": "button[data-action='load-customers']"
+    }
+}
+
+response = requests.post(
+    '/create_tool_from_endpoint',
+    headers={'Content-Type': 'application/json'},
+    data=json.dumps(payload)
+)
+
+result = response.json()
+if result['tools_added']:
+    print(f"Successfully created tool: {result['toolName']}")
+    print(f"Spec IDs: {result['spec_ids']}")
+```
+
+```curl cURL
+curl -X POST "https://api.example.com/create_tool_from_endpoint" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://api.shopify.com/admin/products.json",
+    "method": "GET",
+    "account_id": "shopify_store_123", 
+    "cell_id": "ecommerce_cell",
+    "description": "Retrieve product catalog from Shopify store"
+  }'
+```
+</CodeGroup>
+
+### With Viewport Context
+
+```json
+{
+  "url": "https://api.stripe.com/v1/customers",
+  "method": "POST",
+  "account_id": "stripe_account",
+  "cell_id": "payments_cell",
+  "request_body": "email=customer@example.com&name=John%20Doe&description=Premium%20customer",
+  "viewport_data": {
+    "page_content": "Customer Registration Form\nEmail: [input field]\nName: [input field]\nPlan: Premium\n[Submit Button]",
+    "images": []
+  },
+  "trigger": {
+    "type": "mouse",
+    "target": "button#create-customer.btn-primary"
+  }
+}
+```
+
+### Manual Tool Upload
+
+```json
+{
+  "url": "https://internal-api.company.com/reports/generate",
+  "method": "POST", 
+  "account_id": "company_internal",
+  "cell_id": "reporting_cell",
+  "description": "Generate quarterly financial reports with custom parameters and date ranges. Supports PDF and Excel output formats.",
+  "manual_upload": true,
+  "request_body": "{\"report_type\":\"quarterly\",\"format\":\"pdf\",\"start_date\":\"2024-01-01\",\"end_date\":\"2024-03-31\"}"
+}
+```
+
+## Response Status Types
+
+### Success
+```json
+{
+  "status": "Success",
+  "tools_added": true,
+  "spec_ids": ["spec_abc123"],
+  "toolName": "company_internal_POST_generate_tool"
+}
+```
+
+### Partial Success
+```json
+{
+  "status": "Partial Success", 
+  "tools_added": false,
+  "error": "Generated OpenAPI spec but failed to add to org tools: Database connection timeout",
+  "description": { /* OpenAPI spec still generated */ }
+}
+```
+
+### Enhancement
+```json
+{
+  "status": "Success",
+  "tools_added": true,
+  "was_enhanced": true,
+  "previous_description": "Basic user creation endpoint",
+  "endpoint_description": "Enhanced: Creates user accounts with email validation, profile setup, and automatic welcome email sending..."
+}
+```
+
+## Error Handling
+
+### Common Errors
+
+<Accordion title="Invalid URL Format">
+```json
+{
+  "status": "error",
+  "message": "Invalid URL format: must include protocol (http/https)"
+}
+```
+</Accordion>
+
+<Accordion title="Missing Required Fields">
+```json
+{
+  "status": "error", 
+  "message": "Missing required fields: account_id, cell_id"
+}
+```
+</Accordion>
+
+<Accordion title="Tool Creation Failed">
+```json
+{
+  "status": "Partial Success",
+  "tools_added": false,
+  "error": "Failed to add to org tools: Insufficient permissions for cell_id"
+}
+```
+</Accordion>
+
+## AI-Powered Analysis
+
+The endpoint uses advanced AI to analyze endpoints:
+
+### Context Understanding
+- **Webpage Content** - Analyzes visible form fields and UI elements
+- **Request Patterns** - Infers parameter types from request data
+- **URL Structure** - Understands REST conventions and resource naming
+- **Trigger Analysis** - Considers user interaction context
+
+### Smart Descriptions
+- **Functional Purpose** - Explains what the endpoint does
+- **Usage Context** - When and how to use the endpoint
+- **Parameter Guidance** - Detailed parameter descriptions with examples
+- **Response Expectations** - Expected response formats and status codes
+
+### Schema Generation
+- **Type Inference** - Automatically determines parameter types
+- **Validation Rules** - Generates appropriate validation constraints
+- **Example Values** - Provides realistic example data
+- **Required Fields** - Identifies mandatory vs optional parameters
+
+## Integration with Agent System
+
+Created tools are automatically:
+
+1. **Registered** in the organization's tool registry
+2. **Available** for AI agent usage immediately
+3. **Secured** with proper access controls
+4. **Documented** with comprehensive OpenAPI specifications
+5. **Versioned** for change tracking and rollback
+
+## Performance
+
+### Typical Processing Times
+- **Simple GET endpoints**: 500-1000ms
+- **Complex POST with forms**: 1000-2000ms  
+- **Enhanced existing tools**: 800-1500ms
+- **Manual uploads**: 600-1200ms
+
+### Optimization Features
+- **Existing tool detection** prevents duplicates
+- **Incremental enhancement** improves tools over time
+- **Caching** of generated specifications
+- **Parallel processing** of multiple endpoints
+
+---
+
+<Note>
+This endpoint is designed for automatic API discovery and tool creation from web interactions. It works best when provided with rich context data including request bodies and viewport information.
+</Note>

@@ -1,0 +1,318 @@
+---
+title: 'Create tool from endpoint'
+openapi: 'POST /create_tool_from_endpoint'
+---
+## Generic POST Body Example
+
+### Complete Request Body Template
+
+```json
+{
+  // ✅ REQUIRED PARAMETERS
+  "url": "https://api.example.com/v1/customers",
+  "method": "POST",
+  "account_id": "acct_tech_solutions_123",
+  "cell_id": "customer_management_cell",
+
+  // ❌ OPTIONAL PARAMETERS
+  "trigger": {                          // Default: null
+    "type": "mouse",
+    "target": "button#create-customer.btn-primary[aria-label='Create New Customer']"
+  },
+  "request_body": "name=John%20Doe&email=john.doe%40company.com&phone=%2B1-555-0123&company=Tech%20Solutions%20Inc&plan=enterprise&source=website_form",
+  "viewport_data": {                    // Default: null
+    "page_content": "Customer Registration Form\n\nCustomer Details\nFull Name: [John Doe]\nEmail Address: [john.doe@company.com]\nPhone Number: [+1-555-0123]\nCompany: [Tech Solutions Inc]\nSubscription Plan: [Enterprise]\nLead Source: [Website Form]\nNotes: [Qualified lead from product demo]\n\n[Create Customer] [Save as Draft] [Cancel]",
+    "images": [
+      {
+        "src": "/forms/customer-form.png",
+        "alt": "Customer registration form with filled fields",
+        "context": "Main form visible to user"
+      }
+    ],
+    "form_fields": [
+      {
+        "name": "customer_name",
+        "value": "John Doe",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "email",
+        "value": "john.doe@company.com", 
+        "type": "email",
+        "required": true
+      },
+      {
+        "name": "subscription_plan",
+        "value": "enterprise",
+        "type": "select",
+        "required": false,
+        "options": ["basic", "pro", "enterprise"]
+      }
+    ]
+  },
+  "description": "Creates a new customer account in the CRM system with contact details, subscription plan, and lead tracking information.",
+  "manual_upload": false                // Default: false
+}
+```
+
+### Parameter Requirements Table
+
+| Parameter | Required | Type | Default | Description | Example Values |
+|-----------|----------|------|---------|-------------|----------------|
+| **url** | ✅ | string | - | Full API endpoint URL | `"https://api.stripe.com/v1/customers"` |
+| **method** | ✅ | string | - | HTTP method | `"GET"`, `"POST"`, `"PUT"`, `"DELETE"`, `"PATCH"` |
+| **account_id** | ✅ | string | - | Account identifier | `"acct_stripe_123"`, `"company_crm"` |
+| **cell_id** | ✅ | string | - | Organization cell ID | `"payments_cell"`, `"customer_mgmt"` |
+| **trigger** | ❌ | object | `null` | UI interaction details | See trigger examples below |
+| **request_body** | ❌ | string | `null` | Request payload (URL-encoded or JSON) | `"name=John&email=john@example.com"` |
+| **viewport_data** | ❌ | object | `null` | Current page context | See viewport examples below |
+| **description** | ❌ | string | `null` | Manual endpoint description | `"Creates user accounts with validation"` |
+| **manual_upload** | ❌ | boolean | `false` | Manual vs auto-detected upload | `true`, `false` |
+
+### Trigger Object Examples
+
+<Accordion title="Button Click Trigger">
+```json
+{
+  "trigger": {
+    "type": "mouse",
+    "target": "button#submit-order.btn-success[data-action='create-order']"
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Form Submission Trigger">
+```json
+{
+  "trigger": {
+    "type": "submit",
+    "target": "form#customer-registration[method='POST'][action='/api/customers']"
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Link Navigation Trigger">
+```json
+{
+  "trigger": {
+    "type": "mouse",
+    "target": "a.nav-link[href='/api/reports/generate'][data-report-type='sales']"
+  }
+}
+```
+</Accordion>
+
+### Request Body Examples
+
+<Accordion title="URL-Encoded Form Data">
+```json
+{
+  "request_body": "first_name=Sarah&last_name=Johnson&email=sarah.johnson%40company.com&phone=%2B1-555-0987&department=marketing&role=manager&start_date=2024-01-15"
+}
+```
+</Accordion>
+
+<Accordion title="JSON Payload (as string)">
+```json
+{
+  "request_body": "{\"customer\":{\"name\":\"John Smith\",\"email\":\"john@example.com\",\"metadata\":{\"source\":\"website\",\"campaign\":\"q4_promo\"}},\"subscription\":{\"plan\":\"pro\",\"trial_days\":14}}"
+}
+```
+</Accordion>
+
+<Accordion title="Complex API Request">
+```json
+{
+  "request_body": "request=%7B%22query%22%3A%22mutation%20CreateUser%20%7B%20createUser%28input%3A%20%7Bname%3A%20%5C%22John%20Doe%5C%22%2C%20email%3A%20%5C%22john%40example.com%5C%22%7D%29%20%7B%20id%20name%20email%20%7D%20%7D%22%7D"
+}
+```
+</Accordion>
+
+### Viewport Data Examples
+
+<Accordion title="E-commerce Product Form">
+```json
+{
+  "viewport_data": {
+    "page_content": "Add New Product\n\nProduct Information\nProduct Name: [Wireless Bluetooth Headphones]\nSKU: [WBH-2024-001]\nPrice: [$199.99]\nCategory: [Electronics > Audio]\nDescription: [Premium wireless headphones with noise cancellation]\nStock Quantity: [50]\nWeight: [0.8 lbs]\nDimensions: [8x6x3 inches]\n\n[Save Product] [Save & Add Another] [Preview] [Cancel]",
+    "images": [
+      {
+        "src": "/admin/product-form.png",
+        "alt": "Product creation form with all fields filled",
+        "context": "Admin product management interface"
+      }
+    ],
+    "form_fields": [
+      {
+        "name": "product_name",
+        "value": "Wireless Bluetooth Headphones",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "price",
+        "value": "199.99",
+        "type": "number",
+        "required": true
+      },
+      {
+        "name": "category_id",
+        "value": "electronics_audio",
+        "type": "select",
+        "required": true,
+        "options": ["electronics_audio", "electronics_mobile", "home_garden"]
+      },
+      {
+        "name": "stock_quantity",
+        "value": "50",
+        "type": "number",
+        "required": false
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+<Accordion title="CRM Lead Capture">
+```json
+{
+  "viewport_data": {
+    "page_content": "New Lead Registration\n\nLead Information\nCompany: [Acme Corporation]\nContact Name: [Jane Smith]\nEmail: [jane.smith@acme.com]\nPhone: [+1-555-0199]\nIndustry: [Manufacturing]\nCompany Size: [500-1000 employees]\nInterest Level: [High]\nSource: [Trade Show - TechExpo 2024]\nNotes: [Interested in enterprise package, budget approved]\n\n[Create Lead] [Schedule Follow-up] [Send Brochure] [Cancel]",
+    "images": [],
+    "form_fields": [
+      {
+        "name": "company_name",
+        "value": "Acme Corporation",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "contact_email",
+        "value": "jane.smith@acme.com",
+        "type": "email", 
+        "required": true
+      },
+      {
+        "name": "interest_level",
+        "value": "high",
+        "type": "radio",
+        "required": false,
+        "options": ["low", "medium", "high", "urgent"]
+      },
+      {
+        "name": "lead_source",
+        "value": "trade_show",
+        "type": "select",
+        "required": true,
+        "options": ["website", "trade_show", "referral", "cold_outreach"]
+      }
+    ]
+  }
+}
+```
+</Accordion>
+
+### Use Case Examples
+
+#### Simple GET Endpoint
+
+```json
+{
+  "url": "https://api.github.com/user/repos",
+  "method": "GET",
+  "account_id": "github_integration",
+  "cell_id": "development_tools"
+}
+```
+
+#### Complex POST with Authentication
+
+```json
+{
+  "url": "https://api.stripe.com/v1/payment_intents",
+  "method": "POST",
+  "account_id": "stripe_payments",
+  "cell_id": "ecommerce_payments",
+  "request_body": "amount=2000&currency=usd&payment_method_types[]=card&metadata[order_id]=ord_123456&metadata[customer_id]=cus_789012",
+  "description": "Creates a payment intent for processing credit card payments with order tracking metadata",
+  "trigger": {
+    "type": "mouse",
+    "target": "button#checkout-pay-now[data-amount='20.00'][data-currency='USD']"
+  }
+}
+```
+
+#### Manual API Documentation Upload
+
+```json
+{
+  "url": "https://internal-api.company.com/v2/reports/generate",
+  "method": "POST",
+  "account_id": "internal_systems",
+  "cell_id": "reporting_analytics",
+  "description": "Generates comprehensive business reports with customizable parameters including date ranges, report types (sales, financial, operational), output formats (PDF, Excel, CSV), and email delivery options. Supports scheduled report generation and template customization.",
+  "manual_upload": true,
+  "request_body": "{\"report_type\":\"sales_summary\",\"date_range\":{\"start\":\"2024-01-01\",\"end\":\"2024-03-31\"},\"format\":\"pdf\",\"email_recipients\":[\"manager@company.com\"],\"include_charts\":true,\"breakdown_by\":[\"region\",\"product_category\"]}"
+}
+```
+
+#### GraphQL API Endpoint
+
+```json
+{
+  "url": "https://api.shopify.com/graphql",
+  "method": "POST", 
+  "account_id": "shopify_store_456",
+  "cell_id": "ecommerce_management",
+  "request_body": "query=%7B%20products%28first%3A%2010%29%20%7B%20edges%20%7B%20node%20%7B%20id%20title%20handle%20productType%20vendor%20%7D%20%7D%20%7D%20%7D",
+  "trigger": {
+    "type": "mouse",
+    "target": "button.load-products[data-action='fetch-inventory']"
+  },
+  "viewport_data": {
+    "page_content": "Inventory Management\nProducts: Loading...\n[Refresh Inventory] [Add Product] [Export Data]\nFilters: Category [All] | Status [Active] | Vendor [All]"
+  }
+}
+```
+
+### Minimal Required Request
+
+```json
+{
+  "url": "https://api.example.com/users",
+  "method": "GET",
+  "account_id": "my_account",
+  "cell_id": "user_management"
+}
+```
+
+### Advanced Configuration Request
+
+```json
+{
+  "url": "https://api.salesforce.com/services/data/v58.0/sobjects/Contact",
+  "method": "POST",
+  "account_id": "salesforce_crm",
+  "cell_id": "sales_operations",
+  "trigger": {
+    "type": "submit",
+    "target": "form#contact-creation[data-object='Contact'][data-validation='required']"
+  },
+  "request_body": "FirstName=Michael&LastName=Chen&Email=michael.chen%40techstartup.com&Phone=%2B1-555-0156&Company=TechStartup%20Inc&Title=CTO&LeadSource=Website&Industry=Technology&AnnualRevenue=5000000",
+  "viewport_data": {
+    "page_content": "Create New Contact - Salesforce\n\nContact Information\nFirst Name: [Michael] *\nLast Name: [Chen] *\nEmail: [michael.chen@techstartup.com] *\nPhone: [+1-555-0156]\nCompany: [TechStartup Inc]\nTitle: [CTO]\nLead Source: [Website]\nIndustry: [Technology]\nAnnual Revenue: [$5,000,000]\n\n[Save] [Save & New] [Cancel]",
+    "form_fields": [
+      {"name": "FirstName", "value": "Michael", "type": "text", "required": true},
+      {"name": "LastName", "value": "Chen", "type": "text", "required": true},
+      {"name": "Email", "value": "michael.chen@techstartup.com", "type": "email", "required": true},
+      {"name": "LeadSource", "value": "Website", "type": "select", "required": false}
+    ]
+  },
+  "description": "Creates a new contact record in Salesforce CRM with comprehensive business information including company details, revenue data, and lead tracking.",
+  "manual_upload": false
+}
+```

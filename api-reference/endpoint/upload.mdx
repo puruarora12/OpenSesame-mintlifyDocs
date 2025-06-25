@@ -1,0 +1,659 @@
+---
+title: 'upload'
+openapi: 'POST /upload/'
+---
+## Generic POST Body Example
+
+### Complete Request Body Template
+
+```json
+{
+  // ✅ REQUIRED PARAMETERS
+  "cell_id": "ecommerce_platform_cell",
+  "name": "E-commerce Management API v2.1",
+  "description": "Comprehensive API for managing products, orders, customers, and inventory in our e-commerce platform. Includes advanced features like bulk operations, real-time inventory tracking, automated pricing rules, and customer segmentation.",
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "E-commerce Platform API",
+      "version": "2.1.0",
+      "description": "Complete e-commerce management system API",
+      "contact": {
+        "name": "API Support",
+        "email": "api-support@ecommerce.com"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://api.ecommerce-platform.com/v2",
+        "description": "Production server"
+      },
+      {
+        "url": "https://staging-api.ecommerce-platform.com/v2", 
+        "description": "Staging server"
+      }
+    ],
+    "paths": {
+      "/products": {
+        "get": {
+          "operationId": "listProducts",
+          "summary": "List all products",
+          "description": "Retrieve a paginated list of products with filtering and search capabilities",
+          "parameters": [
+            {
+              "name": "category",
+              "in": "query",
+              "schema": {"type": "string"},
+              "description": "Filter by product category"
+            },
+            {
+              "name": "limit",
+              "in": "query", 
+              "schema": {"type": "integer", "default": 20},
+              "description": "Number of products per page"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of products",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "products": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/Product"}
+                      },
+                      "total": {"type": "integer"},
+                      "page": {"type": "integer"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "operationId": "createProduct",
+          "summary": "Create new product",
+          "description": "Add a new product to the catalog with full details and inventory information",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ProductInput"}
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Product created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {"$ref": "#/components/schemas/Product"}
+                }
+              }
+            }
+          }
+        }
+      },
+      "/orders": {
+        "get": {
+          "operationId": "listOrders",
+          "summary": "List customer orders",
+          "description": "Retrieve orders with status filtering and date range support",
+          "parameters": [
+            {
+              "name": "status",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "enum": ["pending", "processing", "shipped", "delivered", "cancelled"]
+              }
+            }
+          ]
+        },
+        "post": {
+          "operationId": "createOrder",
+          "summary": "Create new order",
+          "description": "Process a new customer order with payment and shipping details"
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Product": {
+          "type": "object",
+          "properties": {
+            "id": {"type": "string"},
+            "name": {"type": "string"},
+            "price": {"type": "number"},
+            "category": {"type": "string"},
+            "stock_quantity": {"type": "integer"}
+          }
+        },
+        "ProductInput": {
+          "type": "object",
+          "required": ["name", "price", "category"],
+          "properties": {
+            "name": {"type": "string"},
+            "price": {"type": "number", "minimum": 0},
+            "category": {"type": "string"},
+            "description": {"type": "string"},
+            "stock_quantity": {"type": "integer", "default": 0}
+          }
+        }
+      }
+    }
+  },
+
+  // ❌ OPTIONAL PARAMETERS
+  "user_types": ["admin", "enterprise", "pro"],  // Default: ["admin"]
+  "replace_existing": true                        // Default: false
+}
+```
+
+### Parameter Requirements Table
+
+| Parameter | Required | Type | Default | Description | Example Values |
+|-----------|----------|------|---------|-------------|----------------|
+| **cell_id** | ✅ | string | - | Organization cell identifier | `"ecommerce_cell"`, `"crm_tools"`, `"analytics_hub"` |
+| **name** | ✅ | string | - | Human-readable API name | `"Customer Management API"`, `"Payment Processing v3"` |
+| **description** | ✅ | string | - | Detailed API description | See description examples below |
+| **openapi_spec** | ✅ | object | - | Complete OpenAPI 3.0 specification | See OpenAPI examples below |
+| **user_types** | ❌ | array | `["admin"]` | User types with access | `["admin", "enterprise", "pro", "free"]` |
+| **replace_existing** | ❌ | boolean | `false` | Replace existing tools | `true`, `false` |
+
+### OpenAPI Specification Examples
+
+<Accordion title="Complete E-commerce API">
+```json
+{
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "E-commerce Platform API",
+      "version": "2.1.0",
+      "description": "Complete e-commerce management system with products, orders, customers, and analytics",
+      "contact": {
+        "name": "Development Team",
+        "email": "dev@company.com",
+        "url": "https://company.com/api-docs"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://api.company.com/v2",
+        "description": "Production environment"
+      },
+      {
+        "url": "https://staging-api.company.com/v2",
+        "description": "Staging environment"
+      }
+    ],
+    "paths": {
+      "/products": {
+        "get": {
+          "operationId": "listProducts",
+          "summary": "List products with filtering",
+          "description": "Retrieve products with advanced filtering, search, and pagination capabilities",
+          "tags": ["Products"],
+          "parameters": [
+            {
+              "name": "category",
+              "in": "query",
+              "description": "Filter by product category",
+              "schema": {"type": "string"}
+            },
+            {
+              "name": "search",
+              "in": "query", 
+              "description": "Search in product names and descriptions",
+              "schema": {"type": "string"}
+            },
+            {
+              "name": "min_price",
+              "in": "query",
+              "description": "Minimum price filter",
+              "schema": {"type": "number", "minimum": 0}
+            },
+            {
+              "name": "max_price",
+              "in": "query",
+              "description": "Maximum price filter", 
+              "schema": {"type": "number", "minimum": 0}
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Number of products per page",
+              "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}
+            },
+            {
+              "name": "offset",
+              "in": "query",
+              "description": "Number of products to skip",
+              "schema": {"type": "integer", "minimum": 0, "default": 0}
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successful response with product list",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "products": {
+                        "type": "array",
+                        "items": {"$ref": "#/components/schemas/Product"}
+                      },
+                      "total_count": {"type": "integer"},
+                      "page_info": {
+                        "type": "object",
+                        "properties": {
+                          "has_next_page": {"type": "boolean"},
+                          "has_previous_page": {"type": "boolean"},
+                          "current_page": {"type": "integer"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {"description": "Invalid request parameters"},
+            "500": {"description": "Internal server error"}
+          }
+        },
+        "post": {
+          "operationId": "createProduct",
+          "summary": "Create new product",
+          "description": "Add a new product to the catalog with comprehensive details",
+          "tags": ["Products"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ProductCreateRequest"}
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Product created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {"$ref": "#/components/schemas/Product"}
+                }
+              }
+            },
+            "400": {"description": "Invalid product data"},
+            "409": {"description": "Product with SKU already exists"}
+          }
+        }
+      },
+      "/customers": {
+        "get": {
+          "operationId": "listCustomers",
+          "summary": "List customers",
+          "description": "Retrieve customer list with search and filtering options",
+          "tags": ["Customers"]
+        },
+        "post": {
+          "operationId": "createCustomer",
+          "summary": "Create customer account",
+          "description": "Register a new customer with profile and preferences",
+          "tags": ["Customers"]
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Product": {
+          "type": "object",
+          "required": ["id", "name", "price", "sku"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique product identifier",
+              "example": "prod_12345"
+            },
+            "name": {
+              "type": "string",
+              "description": "Product name",
+              "example": "Wireless Bluetooth Headphones"
+            },
+            "description": {
+              "type": "string",
+              "description": "Detailed product description",
+              "example": "Premium wireless headphones with noise cancellation"
+            },
+            "price": {
+              "type": "number",
+              "description": "Product price in USD",
+              "minimum": 0,
+              "example": 199.99
+            },
+            "sku": {
+              "type": "string",
+              "description": "Stock keeping unit",
+              "example": "WBH-2024-001"
+            },
+            "category": {
+              "type": "string",
+              "description": "Product category",
+              "example": "Electronics"
+            },
+            "stock_quantity": {
+              "type": "integer",
+              "description": "Available inventory",
+              "minimum": 0,
+              "example": 50
+            },
+            "images": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Product image URLs"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Product creation timestamp"
+            }
+          }
+        },
+        "ProductCreateRequest": {
+          "type": "object",
+          "required": ["name", "price", "sku", "category"],
+          "properties": {
+            "name": {"type": "string", "minLength": 1, "maxLength": 200},
+            "description": {"type": "string", "maxLength": 2000},
+            "price": {"type": "number", "minimum": 0},
+            "sku": {"type": "string", "pattern": "^[A-Z0-9-]+$"},
+            "category": {"type": "string"},
+            "stock_quantity": {"type": "integer", "minimum": 0, "default": 0},
+            "images": {
+              "type": "array",
+              "items": {"type": "string", "format": "uri"},
+              "maxItems": 10
+            }
+          }
+        }
+      },
+      "securitySchemes": {
+        "ApiKeyAuth": {
+          "type": "apiKey",
+          "in": "header",
+          "name": "X-API-Key"
+        },
+        "BearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    },
+    "security": [
+      {"ApiKeyAuth": []},
+      {"BearerAuth": []}
+    ]
+  }
+}
+```
+</Accordion>
+
+<Accordion title="CRM Customer Management API">
+```json
+{
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "CRM Customer Management API",
+      "version": "1.0.0",
+      "description": "Customer relationship management system for tracking leads, contacts, and sales opportunities"
+    },
+    "servers": [
+      {"url": "https://crm-api.company.com/v1", "description": "Production"}
+    ],
+    "paths": {
+      "/contacts": {
+        "get": {
+          "operationId": "listContacts",
+          "summary": "List all contacts",
+          "description": "Retrieve contacts with filtering by status, source, and date ranges"
+        },
+        "post": {
+          "operationId": "createContact",
+          "summary": "Create new contact",
+          "description": "Add a new contact to the CRM system with lead scoring"
+        }
+      },
+      "/opportunities": {
+        "get": {
+          "operationId": "listOpportunities",
+          "summary": "List sales opportunities",
+          "description": "Retrieve sales pipeline with stage and value filtering"
+        },
+        "post": {
+          "operationId": "createOpportunity",
+          "summary": "Create sales opportunity",
+          "description": "Create a new sales opportunity linked to a contact"
+        }
+      }
+    }
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Financial Services API">
+```json
+{
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Financial Services API",
+      "version": "3.2.0",
+      "description": "Comprehensive financial services API for banking, payments, and account management"
+    },
+    "servers": [
+      {"url": "https://api.financialservices.com/v3", "description": "Production"}
+    ],
+    "paths": {
+      "/accounts": {
+        "get": {
+          "operationId": "listAccounts",
+          "summary": "List customer accounts",
+          "description": "Retrieve bank accounts with balance and transaction history"
+        }
+      },
+      "/transactions": {
+        "get": {
+          "operationId": "listTransactions",
+          "summary": "Get transaction history",
+          "description": "Retrieve transaction history with date filtering and categorization"
+        },
+        "post": {
+          "operationId": "createTransaction",
+          "summary": "Process new transaction",
+          "description": "Execute money transfer or payment transaction"
+        }
+      },
+      "/payments": {
+        "post": {
+          "operationId": "processPayment",
+          "summary": "Process payment",
+          "description": "Handle credit card, ACH, or wire transfer payments"
+        }
+      }
+    }
+  }
+}
+```
+</Accordion>
+
+### Description Examples
+
+<Accordion title="E-commerce Platform Description">
+```json
+{
+  "description": "Comprehensive e-commerce platform API providing complete functionality for online retail operations. Features include:\n\n• Product catalog management with categories, variants, and inventory tracking\n• Order processing with payment integration and shipping calculations\n• Customer account management with profiles, preferences, and order history\n• Real-time inventory updates and low-stock alerts\n• Advanced search and filtering capabilities\n• Bulk operations for efficient data management\n• Analytics and reporting endpoints for business insights\n• Multi-currency and multi-language support\n• Webhook notifications for real-time updates\n\nDesigned for high-volume retail operations with enterprise-grade security and performance."
+}
+```
+</Accordion>
+
+<Accordion title="Healthcare Management Description">
+```json
+{
+  "description": "HIPAA-compliant healthcare management system API for patient data, appointments, and medical records. Core capabilities:\n\n• Patient registration and profile management with privacy controls\n• Appointment scheduling with provider availability and conflict resolution\n• Electronic health records (EHR) with secure data access\n• Insurance verification and claims processing\n• Prescription management and drug interaction checking\n• Lab results integration and reporting\n• Billing and payment processing with insurance coordination\n• Audit logging for compliance and security\n• Integration with external healthcare systems (HL7 FHIR)\n\nBuilt with healthcare industry standards and regulatory compliance in mind."
+}
+```
+</Accordion>
+
+<Accordion title="Marketing Automation Description">
+```json
+{
+  "description": "Advanced marketing automation platform API for campaign management, lead nurturing, and customer engagement. Key features:\n\n• Email campaign creation and automation with personalization\n• Lead scoring and segmentation based on behavior and demographics\n• Multi-channel campaign orchestration (email, SMS, social media)\n• A/B testing framework for campaign optimization\n• Customer journey mapping and workflow automation\n• Real-time analytics and performance tracking\n• CRM integration for seamless lead handoff\n• Landing page and form builder integration\n• Advanced reporting with ROI calculations\n\nEmpowers marketing teams to create sophisticated, data-driven campaigns at scale."
+}
+```
+</Accordion>
+
+### User Types Configuration Examples
+
+<Accordion title="Hierarchical Access Control">
+```json
+{
+  "user_types": ["admin", "enterprise", "pro", "free"],
+  "description": "Tiered access model:\n• admin: Full API access including destructive operations\n• enterprise: Advanced features excluding system administration\n• pro: Standard business operations with rate limit increases\n• free: Basic read operations with strict rate limits"
+}
+```
+</Accordion>
+
+<Accordion title="Role-Based Access">
+```json
+{
+  "user_types": ["admin", "sales_manager", "sales_rep", "customer_support"],
+  "description": "Role-specific access:\n• admin: Complete system access\n• sales_manager: Sales data and team management\n• sales_rep: Lead and opportunity management\n• customer_support: Customer data and ticket management"
+}
+```
+</Accordion>
+
+<Accordion title="Department-Based Access">
+```json
+{
+  "user_types": ["admin", "finance", "marketing", "operations", "hr"],
+  "description": "Department-specific tool access based on business function and data sensitivity requirements"
+}
+```
+</Accordion>
+
+### Use Case Examples
+
+#### Simple API Upload
+
+```json
+{
+  "cell_id": "weather_services",
+  "name": "Weather Data API",
+  "description": "Simple weather information API providing current conditions and forecasts",
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {"title": "Weather API", "version": "1.0.0"},
+    "paths": {
+      "/weather": {
+        "get": {
+          "operationId": "getCurrentWeather",
+          "summary": "Get current weather",
+          "parameters": [
+            {"name": "city", "in": "query", "schema": {"type": "string"}}
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+#### Enterprise CRM Upload
+
+```json
+{
+  "cell_id": "enterprise_crm",
+  "name": "Salesforce Integration API v2",
+  "description": "Complete Salesforce CRM integration providing access to leads, contacts, opportunities, accounts, and custom objects. Includes advanced features like bulk data operations, real-time sync, custom field mapping, and workflow automation.",
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Salesforce CRM API",
+      "version": "2.0.0",
+      "description": "Enterprise CRM integration with comprehensive Salesforce functionality"
+    },
+    "paths": {
+      "/leads": {"get": {"operationId": "listLeads"}, "post": {"operationId": "createLead"}},
+      "/contacts": {"get": {"operationId": "listContacts"}, "post": {"operationId": "createContact"}},
+      "/opportunities": {"get": {"operationId": "listOpportunities"}, "post": {"operationId": "createOpportunity"}},
+      "/accounts": {"get": {"operationId": "listAccounts"}, "post": {"operationId": "createAccount"}}
+    }
+  },
+  "user_types": ["admin", "enterprise", "sales_manager"],
+  "replace_existing": true
+}
+```
+
+#### Financial Services Upload
+
+```json
+{
+  "cell_id": "banking_operations",
+  "name": "Core Banking System API v3.1",
+  "description": "Comprehensive banking platform API with account management, transaction processing, payment systems, and regulatory compliance features. Supports real-time processing, fraud detection, and multi-currency operations.",
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Core Banking API",
+      "version": "3.1.0",
+      "description": "Enterprise banking platform with comprehensive financial services"
+    },
+    "paths": {
+      "/accounts": {"get": {"operationId": "listAccounts"}, "post": {"operationId": "createAccount"}},
+      "/transactions": {"get": {"operationId": "getTransactions"}, "post": {"operationId": "processTransaction"}},
+      "/payments": {"post": {"operationId": "initiatePayment"}},
+      "/transfers": {"post": {"operationId": "processTransfer"}}
+    },
+    "components": {
+      "securitySchemes": {
+        "OAuth2": {"type": "oauth2", "flows": {"clientCredentials": {"tokenUrl": "/oauth/token"}}}
+      }
+    },
+    "security": [{"OAuth2": ["read", "write"]}]
+  },
+  "user_types": ["admin", "bank_manager", "teller"],
+  "replace_existing": false
+}
+```
+
+### Minimal Required Request
+
+```json
+{
+  "cell_id": "basic_tools",
+  "name": "Simple REST API",
+  "description": "Basic CRUD operations for user management",
+  "openapi_spec": {
+    "openapi": "3.0.0",
+    "info": {"title": "User API", "version": "1.0.0"},
+    "paths": {
+      "/users": {
+        "get": {"operationId": "getUsers"},
+        "post": {"operationId": "createUser"}
+      }
+    }
+  }
+}
+```

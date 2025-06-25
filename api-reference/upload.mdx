@@ -1,0 +1,582 @@
+---
+title: ' Tool Upload and Management API'
+openapi: 'POST /upload'
+---
+
+
+## Overview
+
+The Tool Upload and Management API provides comprehensive functionality for uploading, managing, and organizing AI agent tools within organization cells. Built on the CellToolManager system, it supports OpenAPI specification uploads, tool filtering, user access control, and vector-based tool discovery.
+
+## Core Endpoints
+
+### Upload OpenAPI Specification
+
+<CodeGroup>
+```bash POST /upload-openapi-spec
+curl -X POST "https://your-api-domain.com/upload-openapi-spec" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cell_id": "cell_123",
+    "name": "Customer Management API",
+    "description": "Complete API for managing customer data and interactions",
+    "openapi_spec": {
+      "openapi": "3.0.0",
+      "info": {"title": "Customer API", "version": "1.0.0"},
+      "paths": {...}
+    }
+  }'
+```
+</CodeGroup>
+
+## Tool Upload Request Format
+
+### Request Schema
+
+```json
+{
+  "cell_id": "string",                  // Organization cell identifier
+  "name": "string",                     // Human-readable API name
+  "description": "string",              // API description and purpose
+  "openapi_spec": {},                   // Complete OpenAPI 3.0 specification
+  "user_types": ["string"],             // Optional: User types with access
+  "replace_existing": false             // Whether to replace existing tools
+}
+```
+
+## Required Parameters
+
+<ParamField query="cell_id" type="string" required>
+  Organization cell identifier where tools will be registered and made available.
+</ParamField>
+
+<ParamField query="name" type="string" required>
+  Human-readable name for the API specification. Used for identification and organization.
+</ParamField>
+
+<ParamField query="description" type="string" required>
+  Detailed description of the API's purpose, functionality, and use cases.
+</ParamField>
+
+<ParamField query="openapi_spec" type="object" required>
+  Complete OpenAPI 3.0 specification object containing all endpoint definitions, schemas, and metadata.
+</ParamField>
+
+## Optional Parameters
+
+<ParamField query="user_types" type="array" default="['admin']">
+  List of user types that should have access to these tools:
+  - `admin` - Full administrative access
+  - `pro` - Professional tier users
+  - `enterprise` - Enterprise tier users
+  - `free` - Free tier users (limited access)
+</ParamField>
+
+<ParamField query="replace_existing" type="boolean" default="false">
+  Whether to replace existing tools with the same names. If false, duplicate tools will be rejected.
+</ParamField>
+
+## Upload Response Format
+
+```json
+{
+  "status": "success",                  // Upload status
+  "spec_ids": ["string"],               // Generated specification IDs
+  "tools_created": 15,                  // Number of tools created
+  "tools_updated": 3,                   // Number of tools updated
+  "cell_id": "string",                  // Target cell ID
+  "message": "string",                  // Status message
+  "tool_details": [                     // Details of created tools
+    {
+      "tool_name": "string",
+      "operation_id": "string",
+      "method": "string",
+      "path": "string",
+      "description": "string",
+      "user_types": ["string"],
+      "operation_type": "read|write"
+    }
+  ],
+  "errors": ["string"]                  // Any non-fatal errors
+}
+```
+
+## Tool Management Operations
+
+### Get Tool Registry
+
+Retrieve all tools available for a specific cell:
+
+<CodeGroup>
+```bash GET /cell/{cell_id}/tools
+curl "https://your-api-domain.com/cell/cell_123/tools?spec_id=spec_456&user_type=pro"
+```
+
+```javascript JavaScript
+const response = await fetch('/cell/cell_123/tools?user_type=pro');
+const tools = await response.json();
+console.log(`Found ${tools.tool_count} tools`);
+```
+
+```python Python
+import requests
+
+response = requests.get('/cell/cell_123/tools', params={
+    'user_type': 'enterprise',
+    'spec_id': 'spec_456'
+})
+tools_data = response.json()
+```
+</CodeGroup>
+
+### Assign User Types to Tools
+
+Control which user types can access specific tools:
+
+<CodeGroup>
+```bash POST /cell/{cell_id}/tools/assign-access
+curl -X POST "https://your-api-domain.com/cell/cell_123/tools/assign-access" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool_names": ["getUserProfile", "updateUserProfile"],
+    "user_type": "pro",
+    "operation": "add"
+  }'
+```
+</CodeGroup>
+
+### Filter Tools by Query
+
+Get relevant tools for a specific query using vector search:
+
+<CodeGroup>
+```bash POST /cell/{cell_id}/tools/filter
+curl -X POST "https://your-api-domain.com/cell/cell_123/tools/filter" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "customer management and user profiles",
+    "user_type": "pro",
+    "limit": 10,
+    "operation_type_filter": "write"
+  }'
+```
+</CodeGroup>
+
+## Advanced Features
+
+### Vector-Based Tool Discovery
+
+The system uses PostgreSQL with pgvector for intelligent tool discovery:
+
+#### How It Works
+
+1. **Embedding Generation**: Tool descriptions are converted to vector embeddings
+2. **Semantic Search**: User queries are matched against tool embeddings
+3. **Contextual Ranking**: Tools are ranked by relevance to the query
+4. **Access Control**: Results are filtered by user permissions
+
+#### Search Features
+
+- **Semantic Understanding**: Finds tools based on meaning, not just keywords
+- **Multi-language Support**: Works with queries in different languages
+- **Context Awareness**: Considers tool descriptions, parameters, and usage patterns
+- **Real-time Updates**: New tools are immediately available for search
+
+### Role-Based Access Control (RBAC)
+
+#### User Type Hierarchy
+
+```
+Admin (Full Access)
+├── Enterprise (Advanced Features)
+│   ├── Pro (Professional Tools)
+│   │   └── Free (Basic Tools)
+```
+
+#### Access Rules
+
+- **Admin**: Access to all tools regardless of assignment
+- **Enterprise**: Access to enterprise and lower-tier tools
+- **Pro**: Access to pro and free-tier tools only
+- **Free**: Access to free-tier tools only
+
+#### Permission Inheritance
+
+- Tools assigned to lower tiers are automatically accessible by higher tiers
+- Default assignment is `admin` only for security
+- Explicit assignment required for broader access
+
+### Operation Type Filtering
+
+Tools are categorized by operation type for fine-grained control:
+
+#### Read Operations
+- `GET` requests
+- Data retrieval
+- Search and query operations
+- Report generation
+
+#### Write Operations  
+- `POST`, `PUT`, `PATCH`, `DELETE` requests
+- Data modification
+- Resource creation/deletion
+- State-changing operations
+
+#### Filter Options
+
+```json
+{
+  "operation_type_filter": "read",     // Only read operations
+  "operation_type_filter": "write",    // All operations (read + write)
+  "operation_type_filter": null        // All operations (default)
+}
+```
+
+## Database Integration
+
+### Custom Table Creation
+
+Create custom tables for data storage:
+
+<CodeGroup>
+```bash POST /cell/{cell_id}/database/create-table
+curl -X POST "https://your-api-domain.com/cell/cell_123/database/create-table" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table_name": "user_activity_logs",
+    "table_schema": "id SERIAL PRIMARY KEY, user_id VARCHAR(255), activity_type VARCHAR(100), created_at TIMESTAMP DEFAULT NOW()"
+  }'
+```
+</CodeGroup>
+
+### Custom SQL Execution
+
+Execute custom SQL queries with proper access controls:
+
+<CodeGroup>
+```bash POST /cell/{cell_id}/database/execute-sql
+curl -X POST "https://your-api-domain.com/cell/cell_123/database/execute-sql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sql": "SELECT COUNT(*) FROM user_activity_logs WHERE activity_type = $1",
+    "params": ["login"],
+    "return_results": true
+  }'
+```
+</CodeGroup>
+
+## Usage Examples
+
+### Complete OpenAPI Upload
+
+<CodeGroup>
+```javascript JavaScript
+const openApiSpec = {
+  "openapi": "3.0.0",
+  "info": {
+    "title": "E-commerce API",
+    "version": "2.1.0",
+    "description": "Complete e-commerce platform API"
+  },
+  "paths": {
+    "/products": {
+      "get": {
+        "operationId": "listProducts",
+        "summary": "List all products",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createProduct",
+        "summary": "Create new product",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "price": {"type": "number"},
+                  "category": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+const response = await fetch('/upload-openapi-spec', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    cell_id: 'ecommerce_cell',
+    name: 'E-commerce Platform API',
+    description: 'Complete API for managing products, orders, and customers',
+    openapi_spec: openApiSpec,
+    user_types: ['admin', 'enterprise', 'pro']
+  })
+});
+
+const result = await response.json();
+console.log(`Created ${result.tools_created} tools`);
+```
+
+```python Python
+import requests
+import json
+
+# Load OpenAPI spec from file
+with open('api_spec.json', 'r') as f:
+    openapi_spec = json.load(f)
+
+upload_data = {
+    "cell_id": "financial_services_cell",
+    "name": "Banking API v3",
+    "description": "Comprehensive banking and financial services API",
+    "openapi_spec": openapi_spec,
+    "user_types": ["admin", "enterprise"],
+    "replace_existing": True
+}
+
+response = requests.post(
+    '/upload-openapi-spec',
+    headers={'Content-Type': 'application/json'},
+    data=json.dumps(upload_data)
+)
+
+if response.status_code == 200:
+    result = response.json()
+    print(f"Upload successful: {result['message']}")
+    print(f"Spec IDs: {result['spec_ids']}")
+else:
+    print(f"Upload failed: {response.text}")
+```
+
+```curl cURL
+curl -X POST "https://api.example.com/upload-openapi-spec" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cell_id": "healthcare_cell",
+    "name": "Patient Management System",
+    "description": "HIPAA-compliant patient data management API",
+    "openapi_spec": {
+      "openapi": "3.0.0",
+      "info": {
+        "title": "Patient Management API",
+        "version": "1.0.0"
+      },
+      "paths": {
+        "/patients": {
+          "get": {
+            "operationId": "listPatients",
+            "summary": "List patients with privacy controls"
+          }
+        }
+      }
+    },
+    "user_types": ["admin", "healthcare_provider"]
+  }'
+```
+</CodeGroup>
+
+### Tool Access Management
+
+<CodeGroup>
+```javascript JavaScript
+// Grant access to specific tools for pro users
+const accessResponse = await fetch('/cell/healthcare_cell/tools/assign-access', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    tool_names: ['listPatients', 'getPatientProfile'],
+    user_type: 'pro',
+    operation: 'add'
+  })
+});
+
+// Remove access
+const removeResponse = await fetch('/cell/healthcare_cell/tools/assign-access', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    tool_names: ['deletePatientRecord'],
+    user_type: 'pro',
+    operation: 'remove'
+  })
+});
+```
+
+```python Python
+# Bulk access assignment
+import requests
+
+tools_to_assign = [
+    "getUserProfile", "updateUserProfile", "listUsers", 
+    "searchUsers", "getUserActivity"
+]
+
+response = requests.post('/cell/crm_cell/tools/assign-access', json={
+    "tool_names": tools_to_assign,
+    "user_type": "enterprise",
+    "operation": "add"
+})
+
+print(f"Access assignment result: {response.json()}")
+```
+</CodeGroup>
+
+### Intelligent Tool Filtering
+
+<CodeGroup>
+```javascript JavaScript
+// Find tools for customer management query
+const filterResponse = await fetch('/cell/crm_cell/tools/filter', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    query: 'customer data management and profile updates',
+    user_type: 'pro',
+    limit: 5,
+    operation_type_filter: 'write'
+  })
+});
+
+const relevantTools = await filterResponse.json();
+console.log('Relevant tools:', relevantTools.tool_names);
+```
+
+```python Python
+# Search for reporting and analytics tools
+filter_request = {
+    "query": "generate reports and analytics dashboards",
+    "user_type": "enterprise", 
+    "limit": 10,
+    "operation_type_filter": "read"
+}
+
+response = requests.post('/cell/analytics_cell/tools/filter', json=filter_request)
+tools = response.json()
+
+for tool_name in tools['tool_names']:
+    print(f"Found relevant tool: {tool_name}")
+```
+</CodeGroup>
+
+## Error Handling
+
+### Upload Errors
+
+<Accordion title="Invalid OpenAPI Specification">
+```json
+{
+  "status": "error",
+  "message": "Invalid OpenAPI spec: missing 'openapi' version",
+  "error_code": "INVALID_SPEC_FORMAT",
+  "details": {
+    "missing_fields": ["openapi", "info"],
+    "validation_errors": ["paths object is empty"]
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Duplicate Tool Names">
+```json
+{
+  "status": "partial_success",
+  "tools_created": 8,
+  "tools_skipped": 3,
+  "message": "Some tools already exist",
+  "errors": [
+    "Tool 'getUserProfile' already exists in cell",
+    "Tool 'updateUser' already exists in cell"
+  ],
+  "suggestion": "Use replace_existing: true to update existing tools"
+}
+```
+</Accordion>
+
+<Accordion title="Database Connection Error">
+```json
+{
+  "status": "error",
+  "message": "Failed to connect to vector database",
+  "error_code": "DATABASE_CONNECTION_FAILED",
+  "details": {
+    "database_type": "PostgreSQL with pgvector",
+    "retry_after": 30,
+    "support_contact": "admin@example.com"
+  }
+}
+```
+</Accordion>
+
+### Access Control Errors
+
+<Accordion title="Insufficient Permissions">
+```json
+{
+  "status": "error",
+  "message": "Insufficient permissions for cell access",
+  "error_code": "ACCESS_DENIED",
+  "details": {
+    "required_role": "admin",
+    "current_role": "pro",
+    "cell_id": "restricted_cell"
+  }
+}
+```
+</Accordion>
+
+## Performance and Scalability
+
+### Vector Store Performance
+
+- **Embedding Generation**: 50-200ms per tool description
+- **Vector Search**: 10-50ms for queries returning 10 results
+- **Index Updates**: Real-time insertion with minimal latency
+- **Concurrent Access**: Supports 100+ concurrent searches
+
+### Database Optimization
+
+- **Connection Pooling**: Efficient PostgreSQL connection management
+- **Index Strategy**: Optimized indexes for tool metadata and vector similarity
+- **Batch Operations**: Bulk tool uploads processed efficiently
+- **Caching**: Frequently accessed tools cached in memory
+
+### Scaling Considerations
+
+- **Cell Isolation**: Each cell has independent tool storage
+- **Horizontal Scaling**: Vector stores can be sharded by cell
+- **Memory Usage**: ~1MB per 1000 tools in vector storage
+- **Storage Growth**: Linear growth with tool count
+
+## Security and Compliance
+
+### Data Protection
+
+- **Encryption**: All tool metadata encrypted at rest
+- **Access Logging**: Complete audit trail of tool access
+- **PII Handling**: No personal data stored in tool descriptions
+- **Backup Strategy**: Automated backups of tool configurations
+
+### API Security
+
+- **Authentication**: Required for all tool management operations
+- **Rate Limiting**: Prevents abuse of upload endpoints
+- **Input Validation**: Comprehensive validation of OpenAPI specs
+- **SQL Injection Prevention**: Parameterized queries for all database operations
+
+---
+
+<Note>
+The Tool Upload and Management API is designed for enterprise-scale tool management with advanced security, search capabilities, and access controls. It supports both automated tool discovery and manual tool curation workflows.
+</Note> 

@@ -1,0 +1,394 @@
+---
+title: "Run Agent API"
+openapi: 'POST /run_agent'
+description: "Execute AI agent workflows with file processing, tool authentication, and real-time streaming responses"
+---
+
+## Overview
+
+The `/run-agent/` endpoint is the core API for executing AI agent workflows. It supports file uploads, tool authentication, rate limiting, and real-time streaming responses with comprehensive usage tracking.
+
+## Endpoint
+
+<CodeGroup>
+```bash POST /run-agent/
+curl -X POST "https://your-api-domain.com/run-agent/" \
+  -H "Content-Type: multipart/form-data" \
+  -F "request={\"query\":\"Analyze this data\",\"user_id\":\"user123\",\"thread_id\":\"thread456\",\"model\":\"gpt-4o\",\"cell_id\":\"cell789\"}" \
+  -F "files=@document.pdf"
+```
+</CodeGroup>
+
+## Request Format
+
+The endpoint accepts `multipart/form-data` with two main components:
+
+### Form Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `request` | string (JSON) | ✅ | JSON string containing the main request parameters |
+| `files` | file[] | ❌ | Array of files to process (PDF, DOC, CSV, etc.) |
+
+### Request JSON Schema
+
+```json
+{
+  "query": "string",                    // User's query/instruction
+  "user_id": "string",                  // Unique user identifier
+  "thread_id": "string",                // Conversation thread ID
+  "model": "string",                    // AI model to use
+  "cell_id": "string",                  // Organization cell identifier
+  "user_type": "string",                // User tier (free, pro, enterprise, admin)
+  "credentials": {},                    // Tool authentication credentials
+  "enabled_tools": ["string"],          // List of allowed tools
+  "file_urls": ["string"],              // URLs to process as files
+  "system_prompt": "string",            // Custom system prompt
+  "replay": false,                      // Whether to replay conversation
+  "replay_thread_id": 0,                // Thread ID for replay
+  "org_materials": "string",            // Organization context materials
+  "viewport_data": {},                  // Current page context data
+  "operation_type_filter": "string"     // Filter tools by operation type
+}
+```
+
+## Required Parameters
+
+<ParamField query="query" type="string" required>
+  The user's question or instruction for the AI agent to process.
+</ParamField>
+
+<ParamField query="user_id" type="string" required>
+  Unique identifier for the user making the request.
+</ParamField>
+
+<ParamField query="thread_id" type="string" required>
+  Unique identifier for the conversation thread.
+</ParamField>
+
+<ParamField query="model" type="string" required>
+  AI model to use for processing. Options:
+  - `gpt-mini` - Fast, cost-effective
+  - `gpt-4o` - Advanced reasoning
+  - `claude-3-7-sonnet` - High performance
+  - `claude-3-5-sonnet` - Latest Claude model
+  - `gpt-4-5` - Premium GPT model
+  - `command-a` - Cohere model
+</ParamField>
+
+<ParamField query="cell_id" type="string" required>
+  Organization cell identifier for context and tool access.
+</ParamField>
+
+## Optional Parameters
+
+<ParamField query="user_type" type="string" default="free">
+  User subscription tier affecting rate limits:
+  - `free` - 100 requests/month
+  - `pro` - 1,000 requests/month
+  - `enterprise` - 100,000 requests/month
+  - `admin` - 1,000,000 requests/month
+</ParamField>
+
+<ParamField query="credentials" type="object" default="{}">
+  Authentication credentials for external tools and APIs.
+</ParamField>
+
+<ParamField query="enabled_tools" type="array" default="null">
+  List of tool names that the user has access to. If not provided, all available tools are enabled.
+</ParamField>
+
+<ParamField query="file_urls" type="array" default="null">
+  Array of URLs to download and process as documents.
+</ParamField>
+
+<ParamField query="system_prompt" type="string" default="null">
+  Custom system prompt to override default agent behavior.
+</ParamField>
+
+<ParamField query="viewport_data" type="object" default="null">
+  Current webpage context data including visible content and images.
+</ParamField>
+
+<ParamField query="operation_type_filter" type="string" default="null">
+  Filter available tools by operation type (e.g., "read", "write").
+</ParamField>
+
+## Response Format
+
+The endpoint returns a **Server-Sent Events (SSE)** stream with real-time updates:
+
+```
+Content-Type: text/event-stream
+```
+
+### Event Types
+
+| Event Type | Description | Example |
+|------------|-------------|---------|
+| `status` | Processing status updates | Connection established, processing files |
+| `message` | AI agent responses | Assistant's text responses |
+| `thinking` | Agent reasoning process | Internal thought process |
+| `function_call` | Tool execution | API calls, data processing |
+| `timing` | Performance metrics | Processing duration, setup time |
+| `error` | Error conditions | Rate limits, authentication failures |
+| `usage_metrics` | Usage tracking | Token count, estimated costs |
+
+### Sample Response Stream
+
+```json
+data: {"status": "connected", "message": "Connection established"}
+
+data: {"status": "processing", "message": "Processing attached files..."}
+
+data: {"type": "timing", "operation": "file_processing", "duration_ms": 1250}
+
+data: {"type": "message", "content": "I'll analyze the uploaded document...", "role": "assistant"}
+
+data: {"type": "function_call", "content": "Calling data analysis tool", "role": "assistant"}
+
+data: {"type": "usage_metrics", "tokens_used": 1500, "estimated_cost_usd": 0.045}
+```
+
+## File Processing
+
+The endpoint supports multiple file formats:
+
+### Supported Formats
+
+- **Documents**: PDF, DOC, DOCX
+- **Spreadsheets**: CSV, XLS, XLSX  
+- **Text**: TXT, MD
+- **Images**: PNG, JPG, JPEG, GIF
+
+### Processing Features
+
+- **Automatic format detection** using content analysis
+- **Large file handling** with streaming for files > 10MB
+- **Vector storage** for document search and retrieval
+- **OCR capabilities** for image-based documents
+- **Metadata extraction** including creation date, author, etc.
+
+## Rate Limiting
+
+Rate limits are enforced based on user type:
+
+| User Type | Monthly Limit | Enforcement |
+|-----------|---------------|-------------|
+| Free | 100 requests | Hard limit with 429 error |
+| Pro | 1,000 requests | Hard limit with 429 error |
+| Enterprise | 100,000 requests | Soft monitoring |
+| Admin | 1,000,000 requests | Monitoring only |
+
+### Rate Limit Response
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "message": "You have exceeded your monthly rate limit for free tier",
+  "user_type": "free",
+  "limit": 100
+}
+```
+
+## Error Handling
+
+### Common Error Types
+
+<Accordion title="ToolAuthenticationError">
+```json
+{
+  "type": "ToolAuthenticationError",
+  "content": "Authentication required for GoogleSheetsAPI",
+  "tool_name": "GoogleSheetsAPI",
+  "auth_url": "https://oauth.google.com/auth",
+  "session_id": "sess_123",
+  "required_fields": ["client_id", "client_secret"],
+  "optional_fields": ["scope"]
+}
+```
+</Accordion>
+
+<Accordion title="CredentialsRequiredError">
+```json
+{
+  "type": "CredentialsRequiredError",
+  "content": "Missing required credentials",
+  "missing_credentials": ["api_key", "secret_key"]
+}
+```
+</Accordion>
+
+<Accordion title="ToolAccessDeniedError">
+```json
+{
+  "type": "ToolAccessDeniedError",
+  "content": "Access denied for tools: SlackAPI, DatabaseTool",
+  "denied_tools": ["SlackAPI", "DatabaseTool"]
+}
+```
+</Accordion>
+
+## Usage Examples
+
+### Basic Text Query
+
+<CodeGroup>
+```javascript JavaScript
+const formData = new FormData();
+formData.append('request', JSON.stringify({
+  query: "What's the weather like today?",
+  user_id: "user123",
+  thread_id: "thread456",
+  model: "gpt-4o",
+  cell_id: "cell789"
+}));
+
+const response = await fetch('/run-agent/', {
+  method: 'POST',
+  body: formData
+});
+
+const reader = response.body.getReader();
+// Process SSE stream...
+```
+
+```python Python
+import requests
+import json
+
+data = {
+    "query": "Analyze the sales data",
+    "user_id": "user123", 
+    "thread_id": "thread456",
+    "model": "claude-3-5-sonnet",
+    "cell_id": "cell789",
+    "user_type": "pro"
+}
+
+files = {'files': open('sales_data.csv', 'rb')}
+form_data = {'request': json.dumps(data)}
+
+response = requests.post(
+    '/run-agent/',
+    data=form_data,
+    files=files,
+    stream=True
+)
+
+for line in response.iter_lines():
+    if line.startswith(b'data: '):
+        event_data = json.loads(line[6:])
+        print(event_data)
+```
+
+```curl cURL
+curl -X POST "https://api.example.com/run-agent/" \
+  -H "Content-Type: multipart/form-data" \
+  -F 'request={"query":"Summarize this document","user_id":"user123","thread_id":"thread456","model":"gpt-4o","cell_id":"cell789"}' \
+  -F "files=@report.pdf" \
+  --no-buffer
+```
+</CodeGroup>
+
+### With Tool Authentication
+
+```json
+{
+  "query": "Get my Google Calendar events for today",
+  "user_id": "user123",
+  "thread_id": "thread456", 
+  "model": "gpt-4o",
+  "cell_id": "cell789",
+  "credentials": {
+    "GoogleCalendarAPI": {
+      "access_token": "ya29.a0AfH6SMC...",
+      "refresh_token": "1//04-rN5..."
+    }
+  },
+  "enabled_tools": ["GoogleCalendarAPI", "DateTimeTool"]
+}
+```
+
+### With Custom System Prompt
+
+```json
+{
+  "query": "Analyze this financial data",
+  "user_id": "user123",
+  "thread_id": "thread456",
+  "model": "claude-3-5-sonnet", 
+  "cell_id": "cell789",
+  "system_prompt": "You are a financial analyst expert. Always provide detailed explanations with specific numbers and percentages. Focus on trends and actionable insights."
+}
+```
+
+## Performance Considerations
+
+### Optimization Tips
+
+- **File Size**: Keep files under 100MB for optimal processing
+- **Concurrent Requests**: Limit to 5 concurrent requests per user
+- **Model Selection**: Use `gpt-mini` for simple queries, `claude-3-5-sonnet` for complex analysis
+- **Tool Filtering**: Specify `enabled_tools` to reduce initialization time
+
+### Timing Metrics
+
+The response includes detailed timing information:
+
+```json
+{
+  "type": "timing",
+  "operation": "total_stream_time", 
+  "duration_ms": 5420
+}
+```
+
+Common operations and typical durations:
+- **File Processing**: 500-3000ms per file
+- **Agent Setup**: 200-800ms
+- **Tool Initialization**: 100-500ms per tool
+- **Model Response**: 1000-5000ms depending on complexity
+
+## Monitoring and Analytics
+
+### Usage Tracking
+
+Every request generates comprehensive usage metrics:
+
+- **Token consumption** (input/output)
+- **Processing duration** breakdown
+- **Tool usage** statistics  
+- **File processing** metrics
+- **Success/failure** rates
+- **Cost estimation** in USD
+
+### Health Monitoring
+
+Use the `/health` endpoint to monitor service status:
+
+```bash
+curl https://api.example.com/health
+```
+
+## Security
+
+### Authentication
+
+- **User ID validation** for request authorization
+- **Cell ID verification** for organizational access control
+- **Tool permissions** enforced per user/organization
+- **Rate limiting** prevents abuse
+
+### Data Privacy
+
+- **Temporary file cleanup** after processing
+- **Credential encryption** in transit and at rest
+- **Thread isolation** prevents data leakage
+- **Audit logging** for compliance
+
+---
+
+<Note>
+This endpoint is designed for real-time AI agent interactions with comprehensive file processing and tool integration capabilities. For simple text-only queries, consider using lighter endpoints for better performance.
+</Note> 

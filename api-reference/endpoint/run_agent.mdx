@@ -1,0 +1,93 @@
+---
+title: 'run_agent'
+openapi: 'POST /run_agent/'
+---
+## Generic POST Body Example
+
+### Complete Request Body Template
+
+```json
+{
+  // ✅ REQUIRED PARAMETERS
+  "query": "Analyze the uploaded sales data and create a summary report with key insights",
+  "user_id": "user_12345",
+  "thread_id": "thread_67890", 
+  "model": "claude-3-5-sonnet",
+  "cell_id": "sales_analytics_cell",
+
+  // ❌ OPTIONAL PARAMETERS
+  "user_type": "pro",                   // Default: "free"
+  "credentials": {                      // Default: {}
+    "GoogleSheetsAPI": {
+      "access_token": "ya29.a0AfH6SMC...",
+      "refresh_token": "1//04-rN5...",
+      "client_id": "123456789.apps.googleusercontent.com"
+    },
+    "SlackAPI": {
+      "bot_token": "xoxb-123456789...",
+      "user_token": "xoxp-987654321..."
+    },
+    "DatabaseTool": {
+      "connection_string": "postgresql://user:pass@host:5432/db",
+      "api_key": "db_api_key_here"
+    }
+  },
+  "enabled_tools": [                    // Default: null (all tools enabled)
+    "GoogleSheetsAPI",
+    "SlackAPI", 
+    "DatabaseTool",
+    "EmailTool",
+    "ChartGenerator"
+  ],
+  "file_urls": [                        // Default: null
+    "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/export?format=csv",
+    "https://example.com/reports/q4-sales.pdf"
+  ],
+  "system_prompt": "You are a senior business analyst with expertise in sales data analysis. Always provide actionable insights with specific numbers and percentages.",
+  "replay": false,                      // Default: false
+  "replay_thread_id": null,             // Default: null
+  "org_materials": "Company: TechCorp Inc. Industry: SaaS Technology Key Metrics: MRR, Churn Rate, CAC, LTV",
+  "viewport_data": {                    // Default: null
+    "page_content": "Sales Dashboard Q4 2024 Performance Total Revenue: $2.4M New Customers: 156 Churn Rate: 3.2%",
+    "images": [
+      {
+        "src": "/dashboard/chart1.png",
+        "alt": "Revenue trend chart showing 15% growth"
+      }
+    ]
+  },
+  "operation_type_filter": "read"       // Default: null, Options: "read", "write", null
+}
+```
+
+### Parameter Requirements Table
+
+| Parameter | Required | Type | Default | Description |
+|-----------|----------|------|---------|-------------|
+| **query** | ✅ | string | - | User's instruction or question |
+| **user_id** | ✅ | string | - | Unique user identifier |
+| **thread_id** | ✅ | string | - | Conversation thread ID |
+| **model** | ✅ | string | - | AI model to use |
+| **cell_id** | ✅ | string | - | Organization cell identifier |
+| **user_type** | ❌ | string | `"free"` | User subscription tier |
+| **credentials** | ❌ | object | `{}` | Tool authentication data |
+| **enabled_tools** | ❌ | array | `null` | Allowed tool names |
+| **file_urls** | ❌ | array | `null` | URLs to download and process |
+| **system_prompt** | ❌ | string | `null` | Custom system instructions |
+| **replay** | ❌ | boolean | `false` | Replay conversation mode |
+| **replay_thread_id** | ❌ | number | `null` | Thread ID for replay |
+| **org_materials** | ❌ | string | `null` | Organization context |
+| **viewport_data** | ❌ | object | `null` | Current page context |
+| **operation_type_filter** | ❌ | string | `null` | Tool operation filter |
+
+### Minimal Required Request
+
+```json
+{
+  "query": "What's the weather like today?",
+  "user_id": "user_123",
+  "thread_id": "thread_456", 
+  "model": "gpt-4o",
+  "cell_id": "general_cell"
+}
+```
