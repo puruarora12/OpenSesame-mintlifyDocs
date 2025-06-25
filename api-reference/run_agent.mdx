@@ -39,14 +39,9 @@ The endpoint accepts `multipart/form-data` with two main components:
   "thread_id": "string",                // Conversation thread ID
   "model": "string",                    // AI model to use
   "cell_id": "string",                  // Organization cell identifier
-  "user_type": "string",                // User tier (can be empty)
   "credentials": {},                    // Tool authentication credentials
-  "enabled_tools": ["string"],          // List of allowed tools
   "file_urls": ["string"],              // URLs to process as files
   "system_prompt": "string",            // Custom system prompt
-  "replay": false,                      // Whether to replay conversation
-  "replay_thread_id": 0,                // Thread ID for replay
-  "org_materials": "string",            // Organization context materials
   "viewport_data": {},                  // Current page context data
   "operation_type_filter": "string"     // Filter tools by operation type
 }
@@ -82,20 +77,8 @@ The endpoint accepts `multipart/form-data` with two main components:
 
 ## Optional Parameters
 
-<ParamField query="user_type" type="string" default="free">
-  User subscription tier affecting rate limits:
-  - `free` - 100 requests/month
-  - `pro` - 1,000 requests/month
-  - `enterprise` - 100,000 requests/month
-  - `admin` - 1,000,000 requests/month
-</ParamField>
-
 <ParamField query="credentials" type="object" default="{}">
   Authentication credentials for external tools and APIs.
-</ParamField>
-
-<ParamField query="enabled_tools" type="array" default="null">
-  List of tool names that the user has access to. If not provided, all available tools are enabled.
 </ParamField>
 
 <ParamField query="file_urls" type="array" default="null">
@@ -169,28 +152,6 @@ The endpoint supports multiple file formats:
 - **OCR capabilities** for image-based documents
 - **Metadata extraction** including creation date, author, etc.
 
-## Rate Limiting
-
-Rate limits are enforced based on user type:
-
-| User Type | Monthly Limit | Enforcement |
-|-----------|---------------|-------------|
-| Free | 100 requests | Hard limit with 429 error |
-| Pro | 1,000 requests | Hard limit with 429 error |
-| Enterprise | 100,000 requests | Soft monitoring |
-| Admin | 1,000,000 requests | Monitoring only |
-
-### Rate Limit Response
-
-```json
-{
-  "error": "Rate limit exceeded",
-  "message": "You have exceeded your monthly rate limit for free tier",
-  "user_type": "free",
-  "limit": 100
-}
-```
-
 ## Error Handling
 
 ### Common Error Types
@@ -263,7 +224,6 @@ data = {
     "thread_id": "thread456",
     "model": "claude-3-5-sonnet",
     "cell_id": "cell789",
-    "user_type": "pro"
 }
 
 files = {'files': open('sales_data.csv', 'rb')}
@@ -305,8 +265,7 @@ curl -X POST "https://api.example.com/run-agent/" \
       "access_token": "ya29.a0AfH6SMC...",
       "refresh_token": "1//04-rN5..."
     }
-  },
-  "enabled_tools": ["GoogleCalendarAPI", "DateTimeTool"]
+  }
 }
 ```
 
@@ -330,7 +289,6 @@ curl -X POST "https://api.example.com/run-agent/" \
 - **File Size**: Keep files under 100MB for optimal processing
 - **Concurrent Requests**: Limit to 5 concurrent requests per user
 - **Model Selection**: Use `gpt-mini` for simple queries, `claude-3-5-sonnet` for complex analysis
-- **Tool Filtering**: Specify `enabled_tools` to reduce initialization time
 
 ### Timing Metrics
 
@@ -377,7 +335,6 @@ curl https://api.example.com/health
 
 - **User ID validation** for request authorization
 - **Cell ID verification** for organizational access control
-- **Tool permissions** enforced per user/organization
 - **Rate limiting** prevents abuse
 
 ### Data Privacy
